@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Простая модель симуляции ткани (Canvas2D)</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #1a1a1a; color: white; font-family: Arial; }
+        #canvas { width: 600px; height: 600px; border: 1px solid #333; }
+        .controls { margin: 10px 0; }
+        label { margin-right: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Простая модель симуляции ткани (Canvas2D)</h1>
+    <div class="controls">
+        <label><input type="checkbox" id="gravity"> Включить гравитацию</label>
+    </div>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const gravityCheckbox = document.getElementById('gravity');
+        
+        // Создаем сетку 10x10 (Canvas2D реализация)
+        const rows = 10, cols = 10;
+        const vertices = [];
+        const indices = [];
+        
+        // Генерируем вершины
+        for (let y = 0; y <= rows; y++) {
+            for (let x = 0; x <= cols; x++) {
+                vertices.push({
+                    x: (x - cols/2) * 0.1,
+                    y: 0,
+                    z: (y - rows/2) * 0.1,
+                    pinned: (x === 0 && y === 0) || (x === cols && y === 0) || 
+                           (x === 0 && y === rows) || (x === cols && y === rows)
+                });
+            }
+        }
+        
+        // Генерируем треугольники
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const i = y * (cols + 1) + x;
+                const i1 = i + 1;
+                const i2 = i + cols + 1;
+                const i3 = i2 + 1;
+                
+                indices.push(i, i1, i2);
+                indices.push(i1, i3, i2);
+            }
+        }
+        
+        // Физика (пружинные связи вместо PBD)
+        const velocities = vertices.map(() => ({x: 0, y: 0, z: 0}));
+        const dt = 1/60;
+        const gravity = 0.5;
+        const damping = 0.98;
+        
+        // Создаем связи между соседними вершинами
+        const springs = [];
+        for (let y = 0; y <= rows; y++) {
+            for (let x = 0; x <= cols; x++) {
+                const i = y * (cols + 1) + x;
+                
+                // Горизонтальные связи
+                if (x < cols) {
+                    springs.push({a: i, b: i + 1, restLength: 0.1});
+                }
+                // Вертикальные связи
+                if (y < rows) {
+                    springs.push({a: i, b: i + cols + 1, restLength: 0.1});
+                }
+            }
+        }
+        
+        // Центральная точка для синуса
+        const centerIndex = Math.floor(rows/2) * (cols + 1) + Math.floor(cols/2);
+        
+        function updatePhysics() {
+            const time = Date.now() * 0.001;
+            
+            // 1. Применяем силы
+            for (let i = 0; i < vertices.length; i++) {
+                const v = vertices[i];
+                const vel = velocities[i];
+                
+                if (v.pinned) {
+                    vel.x = vel.y = vel.z = 0;
+                    continue;
+                }
+                
+                // Гравитация
+                if (gravityCheckbox.checked) {
+                    vel.y += gravity * dt;
+                }
+                
+                // Обновляем позицию
+                v.x += vel.x * dt;
+                v.y += vel.y * dt;
+                v.z += vel.z * dt;
+                
+                // Синус для центральной точки (добавляем к текущей позиции)
+                if (i === centerIndex) {
+                    v.y += 0.1 * Math.sin(time * 2);
+                }
+                
+                // Демпфирование
+                vel.x *= damping;
+                vel.y *= damping;
+                vel.z *= damping;
+            }
+            
+            // 2. Применяем пружинные связи (несколько итераций)
+            for (let iter = 0; iter < 3; iter++) {
+                for (const spring of springs) {
+                    const v1 = vertices[spring.a];
+                    const v2 = vertices[spring.b];
+                    
+                    // Пропускаем если обе вершины закреплены
+                    if (v1.pinned && v2.pinned) continue;
+                    
+                    const dx = v2.x - v1.x;
+                    const dy = v2.y - v1.y;
+                    const dz = v2.z - v1.z;
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    
+                    if (dist > 0) {
+                        const diff = dist - spring.restLength;
+                        const stiffness = 0.5;
+                        const force = stiffness * diff / dist;
+                        
+                        const fx = force * dx;
+                        const fy = force * dy;
+                        const fz = force * dz;
+                        
+                        if (!v1.pinned) {
+                            v1.x += fx * 0.5;
+                            v1.y += fy * 0.5;
+                            v1.z += fz * 0.5;
+                        }
+                        if (!v2.pinned) {
+                            v2.x -= fx * 0.5;
+                            v2.y -= fy * 0.5;
+                            v2.z -= fz * 0.5;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Рендеринг (Canvas2D вместо WebGPU)
+        const ctx = canvas.getContext('2d');
+        
+        function render() {
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 3/4 вид
+            const scale = 200;
+            const offsetX = canvas.width / 2;
+            const offsetY = canvas.height / 2;
+            
+            function project(x, y, z) {
+                const px = x * scale + offsetX;
+                const py = (y * 0.7 - z * 0.7) * scale + offsetY;
+                return {x: px, y: py};
+            }
+            
+            // Рисуем треугольники
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < indices.length; i += 3) {
+                const v1 = vertices[indices[i]];
+                const v2 = vertices[indices[i + 1]];
+                const v3 = vertices[indices[i + 2]];
+                
+                const p1 = project(v1.x, v1.y, v1.z);
+                const p2 = project(v2.x, v2.y, v2.z);
+                const p3 = project(v3.x, v3.y, v3.z);
+                
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.closePath();
+                ctx.stroke();
+            }
+            
+            // Рисуем закрепленные точки
+            ctx.fillStyle = '#ff4444';
+            for (let i = 0; i < vertices.length; i++) {
+                if (vertices[i].pinned) {
+                    const p = project(vertices[i].x, vertices[i].y, vertices[i].z);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Рисуем центральную точку
+            const center = vertices[centerIndex];
+            const centerP = project(center.x, center.y, center.z);
+            ctx.fillStyle = '#4444ff';
+            ctx.beginPath();
+            ctx.arc(centerP.x, centerP.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function animate() {
+            updatePhysics();
+            render();
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
