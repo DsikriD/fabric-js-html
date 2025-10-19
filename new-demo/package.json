@@ -1,0 +1,13 @@
+{
+  "name": "webgpu-texture-demo",
+  "version": "1.0.0",
+  "description": "WebGPU Simple Plane Demo",
+  "main": "main.js",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": ["webgpu", "demo", "3d"],
+  "author": "Danila Sikrier"
+}

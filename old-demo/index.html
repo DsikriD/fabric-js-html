@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Простая модель симуляции ткани (WebGPU)</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 10px; 
+            background: #1a1a1a; 
+            color: white; 
+            font-family: Arial; 
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .demo-link { 
+            display: inline-block; 
+            padding: 12px 25px; 
+            margin: 8px; 
+            background: #333; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            border: 1px solid #555;
+        }
+        .demo-link:hover { background: #555; }
+        h1 { text-align: center; color: #4CAF50; margin: 10px 0; }
+        .description { margin: 15px 0; line-height: 1.4; }
+        .description ul { margin: 10px 0; }
+        .description li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧵 Простая модель симуляции ткани</h1>
+        
+        <div class="description">
+            <p>Демонстрация возможностей WebGPU: симуляция ткани и работа с текстурами.</p>
+            <p><strong>Доступные демо:</strong></p>
+            <ul>
+                <li>🚀 <strong>WebGPU Демо</strong> - физическая симуляция ткани с compute shaders</li>
+                <li>📱 <strong>Canvas2D Демо</strong> - упрощенная версия симуляции ткани</li>
+                <li>🎨 <strong>Texture Demo</strong> - работа с текстурами и трансформациями</li>
+            </ul>
+            <p><strong>Особенности WebGPU Демо:</strong></p>
+            <ul>
+                <li>✅ WebGPU + Compute Shaders</li>
+                <li>✅ PBD (Position Based Dynamics) алгоритм</li>
+                <li>✅ Сетка 10x10 с треугольниками</li>
+                <li>✅ Закрепленные углы (красные точки)</li>
+                <li>✅ Анимированная центральная точка (синяя)</li>
+                <li>✅ Гравитация (включается/выключается)</li>
+                <li>✅ Плавные переходы</li>
+            </ul>
+            <p><strong>Особенности Texture Demo:</strong></p>
+            <ul>
+                <li>✅ Процедурные текстуры</li>
+                <li>✅ Интерактивные трансформации</li>
+                <li>✅ Различные типы текстур (процедурная, градиент, шум)</li>
+                <li>✅ Реальное время рендеринга</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="main.html" class="demo-link">🚀 WebGPU Демо</a>
+            <a href="simple.html" class="demo-link">📱 Canvas2D Демо</a>
+            <a href="texture-demo.html" class="demo-link">🎨 Texture Demo</a>
+        </div>
+        
+        <div class="description">
+            <p><strong>Технические детали:</strong></p>
+            <ul>
+                <li>WebGPU для GPU-ускоренных вычислений</li>
+                <li>WGSL шейдеры для физики</li>
+                <li>Пружинные связи между вершинами</li>
+                <li>Реалистичная симуляция ткани</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

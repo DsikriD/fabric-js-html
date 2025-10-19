@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGPU Simple Plane</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background: #1a1a1a; 
+            color: white; 
+            font-family: Arial; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #canvas { 
+            width: 600px; 
+            height: 600px; 
+            border: 1px solid #333; 
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebGPU Simple Plane</h1>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    
+    <script type="module">
+        const canvas = document.getElementById('canvas');
+        
+        // WebGPU setup
+        const adapter = await navigator.gpu.requestAdapter();
+        const device = await adapter.requestDevice();
+        const context = canvas.getContext('webgpu');
+        const format = navigator.gpu.getPreferredCanvasFormat();
+        context.configure({ device, format });
+        
+        // Простой квадрат из треугольников
+        const vertices = new Float32Array([
+            // Позиции (x, y, z)
+            -1, -1, 0,  // левый нижний
+             1, -1, 0,  // правый нижний
+             1,  1, 0,  // правый верхний
+            -1,  1, 0   // левый верхний
+        ]);
+        
+        const indices = new Uint16Array([
+            0, 1, 2,  // первый треугольник
+            0, 2, 3  // второй треугольник
+        ]);
+        
+        // Создаем буферы
+        const vertexBuffer = device.createBuffer({
+            size: vertices.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+        });
+        device.queue.writeBuffer(vertexBuffer, 0, vertices);
+        
+        const indexBuffer = device.createBuffer({
+            size: indices.byteLength,
+            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+        });
+        device.queue.writeBuffer(indexBuffer, 0, indices);
+        
+        // Uniform буфер для матрицы трансформации
+        const uniformBuffer = device.createBuffer({
+            size: 16 * 4, // 4x4 матрица
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        
+        // WGSL шейдеры (как в main.html)
+        const shaderCode = `
+        struct VSOut {
+            @builtin(position) pos: vec4<f32>,
+            @location(0) color: vec3<f32>,
+        }
+        
+        @vertex
+        fn vs_main(@builtin(vertex_index) vid: u32) -> VSOut {
+            // Простые вершины квадрата
+            let positions = array<vec3<f32>, 4>(
+                vec3<f32>(-1.0, -1.0, 0.0),
+                vec3<f32>( 1.0, -1.0, 0.0),
+                vec3<f32>( 1.0,  1.0, 0.0),
+                vec3<f32>(-1.0,  1.0, 0.0)
+            );
+            
+            let pos = positions[vid];
+            let scale = 0.8;
+            var worldPos = vec4<f32>(pos.x * scale, pos.y * scale, pos.z * scale, 1.0);
+            
+            let ax = 0.0;
+            let ay = 0.0;
+            let cx = cos(ax); let sx = sin(ax);
+            let cy = cos(ay); let sy = sin(ay);
+            var v = worldPos.xyz;
+            v = vec3<f32>(cy*v.x + sy*v.z, v.y, -sy*v.x + cy*v.z);
+            v = vec3<f32>(v.x, cx*v.y - sx*v.z, sx*v.y + cx*v.z);
+            
+            var out: VSOut;
+            out.pos = vec4<f32>(v.x, v.y - 0.1, 0.0, 1.0);
+            out.color = vec3<f32>(0.5, 0.5, 0.5); // Серый цвет
+            return out;
+        }
+        
+        @fragment
+        fn fs_main(inFrag: VSOut) -> @location(0) vec4<f32> {
+            return vec4<f32>(inFrag.color, 1.0);
+        }
+        `;
+        
+        const shaderModule = device.createShaderModule({ code: shaderCode });
+        
+        // Создаем пайплайн рендеринга (без uniform буферов)
+        const renderPipeline = device.createRenderPipeline({
+            layout: 'auto',
+            vertex: {
+                module: shaderModule,
+                entryPoint: 'vs_main'
+            },
+            fragment: {
+                module: shaderModule,
+                entryPoint: 'fs_main',
+                targets: [{ format }]
+            },
+            primitive: { topology: 'triangle-list' }
+        });
+        
+        // Цикл рендеринга (упрощенный)
+        function render() {
+            const encoder = device.createCommandEncoder();
+            const renderPass = encoder.beginRenderPass({
+                colorAttachments: [{
+                    view: context.getCurrentTexture().createView(),
+                    clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1 },
+                    loadOp: 'clear',
+                    storeOp: 'store'
+                }]
+            });
+            
+            renderPass.setPipeline(renderPipeline);
+            renderPass.setIndexBuffer(indexBuffer, 'uint16');
+            renderPass.drawIndexed(6);
+            renderPass.end();
+            
+            device.queue.submit([encoder.finish()]);
+            requestAnimationFrame(render);
+        }
+        
+        render();
+    </script>
+</body>
+</html>
