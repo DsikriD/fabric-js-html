@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGPU Fabric Simulation</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #333;
+            display: block;
+            margin: 20px auto;
+        }
+        .controls {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            min-width: 100px;
+        }
+        input[type="range"] {
+            flex: 1;
+        }
+        .value {
+            min-width: 40px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h2>WebGPU Fabric Simulation Controls</h2>
+        
+        <div class="control-group">
+            <label>Rotation X:</label>
+            <input type="range" id="rotateX" min="-6.28" max="6.28" step="0.1" value="2.5">
+            <span class="value" id="rotateXValue">2.5</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Rotation Y:</label>
+            <input type="range" id="rotateY" min="-6.28" max="6.28" step="0.1" value="0.6">
+            <span class="value" id="rotateYValue">0.6</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Rotation Z:</label>
+            <input type="range" id="rotateZ" min="-6.28" max="6.28" step="0.1" value="2.3">
+            <span class="value" id="rotateZValue">2.3</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Scale:</label>
+            <input type="range" id="scale" min="0.1" max="2.0" step="0.1" value="0.6">
+            <span class="value" id="scaleValue">0.6</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Gravity:</label>
+            <input type="checkbox" id="gravity" checked>
+        </div>
+    </div>
+    
+    <canvas id="canvas" width="800" height="600"></canvas>
+    
+    <script type="module" src="./new-demo/main.js"></script>
+</body>
+</html>

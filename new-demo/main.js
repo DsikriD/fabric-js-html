@@ -285,12 +285,12 @@ const depthTexture = device.createTexture({
 
 async function loadShaders() {
     const shaderFiles = [
-        './vertexShader.wgsl',
-        './fragmentShader.wgsl',
-        './wireframeVertexShader.wgsl',
-        './wireframeFragmentShader.wgsl',
-        './pointVertexShader.wgsl',
-        './pointFragmentShader.wgsl?v=2'
+        './new-demo/vertexShader.wgsl',
+        './new-demo/fragmentShader.wgsl',
+        './new-demo/wireframeVertexShader.wgsl',
+        './new-demo/wireframeFragmentShader.wgsl',
+        './new-demo/pointVertexShader.wgsl',
+        './new-demo/pointFragmentShader.wgsl?v=2'
     ];
     
     const responses = await Promise.all(shaderFiles.map(file => fetch(file)));
