@@ -278,7 +278,7 @@ const pointPositionsBuffer = device.createBuffer({
 device.queue.writeBuffer(pointPositionsBuffer, 0, new Float32Array(pointPositions));
 
 const depthTexture = device.createTexture({
-    size: { width: 500, height: 500 },
+    size: { width: 800, height: 600 },
     format: 'depth24plus',
     usage: GPUTextureUsage.RENDER_ATTACHMENT
 });
